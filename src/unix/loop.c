@@ -62,6 +62,9 @@ int uv__loop_init(uv_loop_t* loop, int default_loop) {
   if (uv__platform_loop_init(loop, default_loop))
     return -1;
 
+  if (uv_async_init(loop, &loop->wq_async, uv__work_done))
+    return -1;
+
   uv_signal_init(loop, &loop->child_watcher);
   uv__handle_unref(&loop->child_watcher);
   loop->child_watcher.flags |= UV__HANDLE_INTERNAL;
@@ -70,9 +73,6 @@ int uv__loop_init(uv_loop_t* loop, int default_loop) {
     ngx_queue_init(loop->process_handles + i);
 
   if (uv_mutex_init(&loop->wq_mutex))
-    abort();
-
-  if (uv_async_init(loop, &loop->wq_async, uv__work_done))
     abort();
 
   uv__handle_unref(&loop->wq_async);
