@@ -43,16 +43,24 @@ int uv_mutex_init(uv_mutex_t* mutex) {
   pthread_mutexattr_t attr;
   int err;
 
-  if (pthread_mutexattr_init(&attr))
-    abort();
+  err = pthread_mutexattr_init(&attr);
+  if (err) {
+    return -err;
+  }
 
-  if (pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK))
-    abort();
+  err = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
+  if (err) {
+    phread_mutexattr_destroy(&attr);
+    return -err;
+  }
 
   err = pthread_mutex_init(mutex, &attr);
+  if (err) {
+    phread_mutexattr_destroy(&attr);
+    return -err;
+  }
 
-  if (pthread_mutexattr_destroy(&attr))
-    abort();
+  err = pthread_mutexattr_destroy(&attr);
 
   return -err;
 #endif
