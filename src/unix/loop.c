@@ -139,14 +139,26 @@ static int uv__loop_init(uv_loop_t* loop, int default_loop) {
   loop->child_watcher.flags |= UV__HANDLE_INTERNAL;
   QUEUE_INIT(&loop->process_handles);
 
-  if (uv_rwlock_init(&loop->cloexec_lock))
-    abort();
+  err = uv_rwlock_init(&loop->cloexec_lock);
+  if (err) {
+    uv__platform_loop_delete(loop);
+    return err;
+  }
 
-  if (uv_mutex_init(&loop->wq_mutex))
-    abort();
+  err = uv_mutex_init(&loop->wq_mutex);
+  if (err) {
+    uv__platform_loop_delete(loop);
+    uv_rwlock_destroy(&loop->cloexec_lock);
+    return err;
+  }
 
-  if (uv_async_init(loop, &loop->wq_async, uv__work_done))
-    abort();
+  err = uv_async_init(loop, &loop->wq_async, uv__work_done);
+  if (err) {
+    uv__platform_loop_delete(loop);
+    uv_rwlock_destroy(&loop->cloexec_lock);
+    uv_mutex_destroy(&loop->wq_mutex);
+    return err;
+  }
 
   uv__handle_unref(&loop->wq_async);
   loop->wq_async.flags |= UV__HANDLE_INTERNAL;
