@@ -44,9 +44,8 @@ int uv_mutex_init(uv_mutex_t* mutex) {
   int err;
 
   err = pthread_mutexattr_init(&attr);
-  if (err) {
+  if (err)
     return -err;
-  }
 
   err = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
   if (err) {
